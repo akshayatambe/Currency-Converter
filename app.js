@@ -1,0 +1,77 @@
+const BASE_URL = "https://api.frankfurter.app/latest";
+
+const dropdowns = document.querySelectorAll(".dropdown select");
+const btn = document.querySelector("form button");
+const fromCurr = document.querySelector(".from select");
+const toCurr = document.querySelector(".to select");
+const msg = document.querySelector(".msg");
+
+// Populate dropdowns
+for (let select of dropdowns) {
+  for (let currCode in countryList) {
+    let newOption = document.createElement("option");
+    newOption.innerText = currCode;
+    newOption.value = currCode;
+
+    if (select.name === "from" && currCode === "USD") {
+      newOption.selected = true;
+    }
+    if (select.name === "to" && currCode === "INR") {
+      newOption.selected = true;
+    }
+
+    select.append(newOption);
+  }
+
+  select.addEventListener("change", (evt) => {
+    updateFlag(evt.target);
+  });
+}
+
+// Fetch exchange rate
+const updateExchangeRate = async () => {
+  let amount = document.querySelector(".amount input");
+  let amtVal = Number(amount.value.trim());
+
+  if (!amtVal || amtVal <= 0) {
+    amtVal = 1;
+    amount.value = "1";
+  }
+
+  let from = fromCurr.value;
+  let to = toCurr.value;
+
+  let URL = `${BASE_URL}?amount=${amtVal}&from=${from}&to=${to}`;
+
+  let response = await fetch(URL);
+  let data = await response.json();
+
+  let finalAmount = data.rates[to];
+
+  msg.innerText = `${amtVal} ${from} = ${finalAmount.toFixed(2)} ${to}`;
+};
+
+// Button click event (IMPORTANT)
+btn.addEventListener("click", (evt) => {
+  evt.preventDefault();
+  updateExchangeRate();
+});
+
+// Update flag images
+const updateFlag = (element) => {
+  let currCode = element.value;
+  let countryCode = countryList[currCode];
+  let img = element.parentElement.querySelector("img");
+
+  if (currCode === "EUR") {
+    img.src =
+      "https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg";
+  } else {
+    img.src = `https://flagsapi.com/${countryCode}/flat/64.png`;
+  }
+};
+
+// Auto update on load
+window.addEventListener("load", () => {
+  updateExchangeRate();
+});
